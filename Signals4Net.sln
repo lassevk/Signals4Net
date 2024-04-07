@@ -1,0 +1,64 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Signals4Net", "src\Signals4Net\Signals4Net.csproj", "{37363B54-45A8-43E0-9801-65068CD30722}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{A6CC77D2-E679-4A73-8C31-736E8CCBD810}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{65C6293C-9D30-46AF-845A-8FF667A092B5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sandboxes", "sandboxes", "{F66A8801-3602-4CF4-9DFF-1CA26A280C24}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "@documents", "@documents", "{9F8D763C-C0B9-4CB9-A814-321D73194150}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.md = LICENSE.md
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "@configuration", "@configuration", "{1C5EBFB2-C041-4C2D-8AA5-C4CABED13244}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "@github actions", "@github actions", "{EA8DEC29-CF7D-4E50-9116-29A4019E83D4}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\build.yml = .github\workflows\build.yml
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Signals4Net.Tests", "tests\Signals4Net.Tests\Signals4Net.Tests.csproj", "{757E0AA3-FF89-49AD-A415-2C13E77D72E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sandbox", "sandboxes\Sandbox\Sandbox.csproj", "{AA806948-E45D-4AEB-91E4-418444C6794D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorSandbox", "sandboxes\BlazorSandbox\BlazorSandbox.csproj", "{26450327-4D8E-4FCA-A9F0-AA2142570139}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{37363B54-45A8-43E0-9801-65068CD30722}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37363B54-45A8-43E0-9801-65068CD30722}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37363B54-45A8-43E0-9801-65068CD30722}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37363B54-45A8-43E0-9801-65068CD30722}.Release|Any CPU.Build.0 = Release|Any CPU
+		{757E0AA3-FF89-49AD-A415-2C13E77D72E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{757E0AA3-FF89-49AD-A415-2C13E77D72E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{757E0AA3-FF89-49AD-A415-2C13E77D72E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{757E0AA3-FF89-49AD-A415-2C13E77D72E6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA806948-E45D-4AEB-91E4-418444C6794D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA806948-E45D-4AEB-91E4-418444C6794D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA806948-E45D-4AEB-91E4-418444C6794D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA806948-E45D-4AEB-91E4-418444C6794D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26450327-4D8E-4FCA-A9F0-AA2142570139}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26450327-4D8E-4FCA-A9F0-AA2142570139}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26450327-4D8E-4FCA-A9F0-AA2142570139}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26450327-4D8E-4FCA-A9F0-AA2142570139}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{37363B54-45A8-43E0-9801-65068CD30722} = {A6CC77D2-E679-4A73-8C31-736E8CCBD810}
+		{757E0AA3-FF89-49AD-A415-2C13E77D72E6} = {65C6293C-9D30-46AF-845A-8FF667A092B5}
+		{AA806948-E45D-4AEB-91E4-418444C6794D} = {F66A8801-3602-4CF4-9DFF-1CA26A280C24}
+		{26450327-4D8E-4FCA-A9F0-AA2142570139} = {F66A8801-3602-4CF4-9DFF-1CA26A280C24}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,32 @@
+Signals4Net
+===
+
+[![build](https://github.com/lassevk/Signals4Net/actions/workflows/build.yml/badge.svg)](https://github.com/lassevk/Signals4Net/actions/workflows/build.yml)
+[![codecov](https://codecov.io/github/lassevk/Signals4Net/graph/badge.svg?token=M7F5JUBV7W)](https://codecov.io/github/lassevk/Signals4Net)
+[![codeql](https://github.com/lassevk/Signals4Net/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/lassevk/Signals4Net/actions/workflows/github-code-scanning/codeql)
+
+This project aim to release NuGet packages with a .NET implementation of [Signals](https://github.com/proposal-signals/proposal-signals), with similar features.
+
+The project will not target specific workloads, so the goal is to be usable in almost all types of .NET projects.
+
+**This project is currently under development, so anything and everything will change.**
+
+Example
+===
+
+    using Signals4Net;
+    
+    var context = new SignalContext();
+    
+    IState<int> counter = context.State(0);
+    IComputed<bool> isEven = context.Computed(() => (counter.Value & 1) == 0);
+    IComputed<string> oddEven = context.Computed(() => isEven.Value ? "even" : "odd");
+    
+    context.Effect(() => Console.WriteLine($"counter: {counter.Value}, oddEven state: {oddEven.Value}"));
+    
+    // Simulate external updates to counter
+    new Timer(_ => counter.Value++, null, 1000, 1000);
+    
+    Console.ReadLine();
+
+*(this is similar to the example in the JS proposal, found [here](https://github.com/proposal-signals/proposal-signals/tree/main?tab=readme-ov-file#example---a-signals-counter).)*

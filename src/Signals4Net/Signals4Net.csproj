@@ -1,0 +1,75 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">True</GeneratePackageOnBuild>
+        <PackageId>Signals4Net</PackageId>
+        <Title>Signals4Net</Title>
+        <Authors>Lasse Vågsæther Karlsen</Authors>
+        <Copyright>Lasse Vågsæther Karlsen $([System.DateTime]::Today.ToString('yyyy')), All rights reserved</Copyright>
+        <PackageProjectUrl>https://github.com/lassevk/Signals4Net</PackageProjectUrl>
+        <Description>Signals for .NET</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSource>true</EmbedUntrackedSource>
+        <DebugType>embedded</DebugType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="MinVer" Version="4.3.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(Configuration)' == 'Release'">
+        <None Include="..\..\README.md" Pack="true" PackagePath="$(PackageReadmeFile)" />
+        <None Include="..\..\LICENSE.md" Pack="true" PackagePath="$(PackageLicenseFile)" />
+    </ItemGroup>
+    <ItemGroup>
+      <Compile Update="IReadOnlySignal.cs">
+        <DependentUpon>ISignal.cs</DependentUpon>
+      </Compile>
+      <Compile Update="SignalContext.cs">
+        <DependentUpon>ISignalContext.cs</DependentUpon>
+      </Compile>
+      <Compile Update="SignalContextFactory.cs">
+        <DependentUpon>ISignalContextFactory.cs</DependentUpon>
+      </Compile>
+      <Compile Update="ISignalContextInternal.cs">
+        <DependentUpon>ISignalContext.cs</DependentUpon>
+      </Compile>
+      <Compile Update="IComputed.cs">
+        <DependentUpon>IReadOnlySignal.cs</DependentUpon>
+      </Compile>
+      <Compile Update="IComputedInternal.cs">
+        <DependentUpon>IComputed.cs</DependentUpon>
+      </Compile>
+      <Compile Update="Computed.cs">
+        <DependentUpon>IComputed.cs</DependentUpon>
+      </Compile>
+      <Compile Update="ComputeScope.cs">
+        <DependentUpon>ISignalContext.cs</DependentUpon>
+      </Compile>
+      <Compile Update="IState.cs">
+        <DependentUpon>ISignal.cs</DependentUpon>
+      </Compile>
+      <Compile Update="State.cs">
+        <DependentUpon>IState.cs</DependentUpon>
+      </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+            <_Parameter1>Signals4Net.Tests</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+</Project>

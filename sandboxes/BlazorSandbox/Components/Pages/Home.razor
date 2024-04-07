@@ -1,0 +1,41 @@
+﻿@page "/"
+@using Signals4Net
+@rendermode InteractiveServer
+
+<PageTitle>Home</PageTitle>
+
+<h1>Hello, world!</h1>
+
+Welcome to your new app.
+
+<p>@_displayText!.Value</p>
+
+<p><button class="btn btn-primary" @onclick="IncrementCount">Click me</button></p>
+
+@code {
+
+    private readonly SignalContext _context = new();
+    private IState<int>? _counter;
+    private IComputed<string>? _displayText;
+
+    protected override void OnInitialized()
+    {
+        _counter = _context.State(0);
+        _displayText = _context.Computed(() => $"The counter value is: {_counter.Value}");
+        _context.Effect(() =>
+        {
+            InvokeAsync(() =>
+            {
+                _ = _displayText.Value;
+                StateHasChanged();
+            });
+        });
+
+        new Timer(_ => _counter.Value++, null, 1000, 1000);
+    }
+
+    private void IncrementCount()
+    {
+        _counter!.Value++;
+    }
+}
