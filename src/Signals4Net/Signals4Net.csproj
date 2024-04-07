@@ -17,7 +17,8 @@
         <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSource>true</EmbedUntrackedSource>
-        <DebugType>embedded</DebugType>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
