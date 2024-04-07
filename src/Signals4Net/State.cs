@@ -3,6 +3,12 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Signals4Net;
 
+/// <summary>
+/// This class implements the state signal supported by <see cref="IState{T}"/>.
+/// </summary>
+/// <typeparam name="T">
+/// The type of values this state signal will hold.
+/// </typeparam>
 public class State<T> : IState<T>
 {
     private readonly ISignalContextInternal _context;
@@ -17,6 +23,7 @@ public class State<T> : IState<T>
         _comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
     }
 
+    /// <inheritdoc cref="IState{T}.Value"/>
     public T Value
     {
         get
@@ -41,6 +48,7 @@ public class State<T> : IState<T>
         }
     }
 
+    /// <inheritdoc cref="INotifyPropertyChanged.PropertyChanged"/>
     [ExcludeFromCodeCoverage]
     public event PropertyChangedEventHandler? PropertyChanged;
 }
