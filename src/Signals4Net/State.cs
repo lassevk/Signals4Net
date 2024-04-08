@@ -9,6 +9,7 @@ public class State<T> : ReadOnlySignal<T>, IState<T>
     private readonly EqualityComparer<T> _comparer;
 
     private T _value;
+    private bool _isFrozen;
 
     internal State(ISignalContextInternal context, T value, EqualityComparer<T> comparer)
     {
@@ -19,12 +20,17 @@ public class State<T> : ReadOnlySignal<T>, IState<T>
 
     public override Task<T> GetValueAsync(CancellationToken cancellationToken = default)
     {
-        _context.OnRead(this);
+        if (!_isFrozen)
+            _context.OnRead(this);
+
         return Task.FromResult(_value);
     }
 
     public Task SetValueAsync(T value, CancellationToken cancellationToken)
     {
+        if (_isFrozen)
+            throw new InvalidOperationException("State signal is frozen, value cannot be changed");
+
         // async will be important here when effects are put back into the mix
         // todo: refactor to be properly async to trigger effects
         if (_comparer.Equals(_value, value))
@@ -41,5 +47,10 @@ public class State<T> : ReadOnlySignal<T>, IState<T>
         }
 
         return Task.CompletedTask;
+    }
+
+    public void Freeze()
+    {
+        _isFrozen = true;
     }
 }

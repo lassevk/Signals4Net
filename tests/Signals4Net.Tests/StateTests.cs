@@ -1,4 +1,7 @@
-﻿namespace Signals4Net.Tests;
+﻿using NSubstitute;
+using NSubstitute.Exceptions;
+
+namespace Signals4Net.Tests;
 
 public class StateTests
 {
@@ -86,5 +89,38 @@ public class StateTests
 
         scope.Dispose();
         Assert.That(fireCount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void SetValueAsync_FrozenStateSignal_ThrowsInvalidOperationException()
+    {
+        var context = new SignalContext();
+        IState<int> state = context.State(0);
+        state.Freeze();
+
+        Assert.Throws<InvalidOperationException>(() => state.SetValueAsync(15));
+    }
+
+    [Test]
+    public async Task SetValueAsync_FrozenStateSignal_DoesNotRegisterReadWithSignalContext()
+    {
+        ISignalContextInternal context = Substitute.For<ISignalContextInternal>();
+        var state = new State<int>(context, 0, EqualityComparer<int>.Default);
+        state.Freeze();
+
+        _ = await state.GetValueAsync();
+
+        context.DidNotReceive().OnRead(state);
+    }
+
+    [Test]
+    public async Task SetValueAsync_StateSignal_RegistersReadWithSignalContext()
+    {
+        ISignalContextInternal context = Substitute.For<ISignalContextInternal>();
+        var state = new State<int>(context, 0, EqualityComparer<int>.Default);
+
+        _ = await state.GetValueAsync();
+
+        context.Received().OnRead(state);
     }
 }

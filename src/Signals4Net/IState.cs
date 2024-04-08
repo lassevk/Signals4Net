@@ -15,4 +15,6 @@ public interface IState<T> : IReadOnlySignal<T>, ISignal
     {
         await SetValueAsync(await mutator(await GetValueAsync(cancellationToken)), cancellationToken);
     }
+
+    void Freeze();
 }
