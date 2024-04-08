@@ -34,6 +34,7 @@ public class SignalContext : ISignalContextInternal
     public IAsyncDisposable WriteScope()
     {
         _writeScopeLevel.Value++;
+
         return new AsyncActionDisposable(async () =>
         {
             _writeScopeLevel.Value--;
