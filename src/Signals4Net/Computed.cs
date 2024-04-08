@@ -46,7 +46,7 @@ public class Computed<T> : ReadOnlySignal<T>, IComputed<T>, IComputedInternal
         {
             using (_context.ComputeScope(this))
             {
-                T newValue = await _expression(cancellationToken);;
+                T newValue = await _expression(cancellationToken);
 
                 // TODO: Handle versioning, if other task/thread have already changed this computed in the background
                 _dirty = false;
