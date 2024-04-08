@@ -6,6 +6,5 @@ internal interface ISignalContextInternal : ISignalContext
     void OnChanged(ISignal signal);
 
     IDisposable ComputeScope(IComputedInternal computed);
-    void FinalizeComputeScope(ComputeScope scope);
     void QueueSubscriberNotification(ISignal signal, Func<ISignal, Task> subscriber);
 }

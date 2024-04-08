@@ -7,7 +7,7 @@ public class SignalContext : ISignalContextInternal
     private readonly Dictionary<ISignal, HashSet<ISignal>> _computesThatDependsOnSignal = new();
     private readonly List<(ISignal signal, Func<ISignal, Task> subscriber)> _pendingSubscriberNotifications = new();
 
-    private readonly AsyncLocal<Stack<ComputeScope>?> _scopes = new();
+    private readonly AsyncLocal<Stack<HashSet<ISignal>>?> _scopes = new();
     private readonly AsyncLocal<int> _writeScopeLevel = new();
 
     public IState<T> State<T>(T value = default!, EqualityComparer<T>? comparer = default) => new State<T>(this, value, comparer ?? EqualityComparer<T>.Default);
@@ -79,8 +79,8 @@ public class SignalContext : ISignalContextInternal
         if (_scopes.Value == null)
             return;
 
-        _scopes.Value!.TryPeek(out ComputeScope? scope);
-        scope?.Read(signal);
+        _scopes.Value!.TryPeek(out HashSet<ISignal>? scope);
+        scope?.Add(signal);
     }
 
     void ISignalContextInternal.OnChanged(ISignal signal)
@@ -105,15 +105,17 @@ public class SignalContext : ISignalContextInternal
 
     IDisposable ISignalContextInternal.ComputeScope(IComputedInternal computed)
     {
-        var scope = new ComputeScope(this, computed);
+        var readSignals = new HashSet<ISignal>();
+
         _scopes.Value ??= new();
-        _scopes.Value.Push(scope);
-        return scope;
+        _scopes.Value.Push(readSignals);
+
+        return new ActionDisposable(() => EndComputeScope(computed, readSignals));
     }
 
-    void ISignalContextInternal.FinalizeComputeScope(ComputeScope scope)
+    private void EndComputeScope(IComputedInternal computed, HashSet<ISignal> readSignals)
     {
-        if (scope != _scopes.Value!.Pop())
+        if (readSignals != _scopes.Value!.Pop())
             throw new InvalidOperationException("ComputeScopes finalized out of order");
 
         if (_scopes.Value!.Count == 0)
@@ -121,14 +123,14 @@ public class SignalContext : ISignalContextInternal
 
         lock (_lock)
         {
-            Remove(scope.Computed);
-            _dependencies[scope.Computed] = scope.ReadSignals;
-            foreach (ISignal dependency in scope.ReadSignals)
+            Remove(computed);
+            _dependencies[computed] = readSignals;
+            foreach (ISignal dependency in readSignals)
             {
                 if (!_computesThatDependsOnSignal.TryGetValue(dependency, out HashSet<ISignal>? computesThatDependsOnSignal))
                     computesThatDependsOnSignal = _computesThatDependsOnSignal[dependency] = new();
 
-                computesThatDependsOnSignal.Add(scope.Computed);
+                computesThatDependsOnSignal.Add(computed);
             }
         }
     }

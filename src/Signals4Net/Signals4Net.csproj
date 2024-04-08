@@ -58,9 +58,6 @@
       <Compile Update="Computed.cs">
         <DependentUpon>IComputed.cs</DependentUpon>
       </Compile>
-      <Compile Update="ComputeScope.cs">
-        <DependentUpon>ISignalContext.cs</DependentUpon>
-      </Compile>
       <Compile Update="IState.cs">
         <DependentUpon>ISignal.cs</DependentUpon>
       </Compile>
