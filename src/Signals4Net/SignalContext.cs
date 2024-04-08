@@ -49,10 +49,8 @@ public class SignalContext : ISignalContextInternal
         if (_scopes.Value == null)
             return;
 
-        if (!_scopes.Value!.TryPeek(out ComputeScope? scope))
-            return;
-
-        scope.Read(signal);
+        _scopes.Value!.TryPeek(out ComputeScope? scope);
+        scope?.Read(signal);
     }
 
     void ISignalContextInternal.OnChanged(ISignal signal)
@@ -114,10 +112,8 @@ public class SignalContext : ISignalContextInternal
 
             foreach (ISignal signal in dependencies)
             {
-                if (!_computesThatDependsOnSignal.TryGetValue(signal, out HashSet<IComputedInternal>? computesThatDependsOnSignal))
-                    continue;
-
-                computesThatDependsOnSignal.Remove(computed);
+                _computesThatDependsOnSignal.TryGetValue(signal, out HashSet<IComputedInternal>? computesThatDependsOnSignal);
+                computesThatDependsOnSignal?.Remove(computed);
             }
 
             _dependencies.Remove(computed);

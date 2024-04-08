@@ -128,7 +128,7 @@ public class ComputedTests
         Assert.That(fireCount, Is.EqualTo(0));
 
         await state.SetValueAsync(15);
-        await state.SetValueAsync(16);
+        await state.MutateAsync(v => v + 1);
 
         Assert.That(fireCount, Is.EqualTo(1));
     }

@@ -7,11 +7,4 @@ public static class SignalContextExtensions
 
     public static Task<IDisposable> AddEffectAsync(this ISignalContext context, Func<Task> effect, CancellationToken cancellationToken = default)
         => context.AddEffectAsync(async _ => await effect(), cancellationToken);
-
-    public static Task<IDisposable> AddEffectAsync(this ISignalContext context, Action effect, CancellationToken cancellationToken = default)
-        => context.AddEffectAsync(_ =>
-        {
-            effect();
-            return Task.CompletedTask;
-        }, cancellationToken);
 }

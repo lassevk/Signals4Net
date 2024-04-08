@@ -1,5 +1,8 @@
-﻿namespace Signals4Net;
+﻿using System.Diagnostics.CodeAnalysis;
 
+namespace Signals4Net;
+
+[ExcludeFromCodeCoverage]
 internal class VoidDisposable : IDisposable
 {
     public void Dispose()
