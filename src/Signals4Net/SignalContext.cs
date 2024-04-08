@@ -33,10 +33,25 @@ public class SignalContext : ISignalContextInternal
         }
     }
 
-    public IDisposable WriteScope()
+    public IAsyncDisposable WriteScope()
     {
-        ((ISupportInitialize)this).BeginInit();
-        return new ActionDisposable(((ISupportInitialize)this).EndInit);
+        _writeScopeLevel.Value++;
+        return new AsyncActionDisposable(async () =>
+        {
+            _writeScopeLevel.Value--;
+            if (_writeScopeLevel.Value == 0)
+            {
+                (ISignal signal, Func<ISignal, Task> subscriber)[]? pendingNotifications;
+                lock (_lock)
+                {
+                    pendingNotifications = _pendingSubscriberNotifications.ToArray();
+                    _pendingSubscriberNotifications.Clear();
+                }
+
+                foreach ((ISignal signal, Func<ISignal, Task> subscriber) notification in pendingNotifications)
+                    await notification.subscriber(notification.signal);
+            }
+        });
     }
 
     public async Task<IDisposable> AddEffectAsync(Func<CancellationToken, Task> effect, CancellationToken cancellationToken = default)
@@ -125,27 +140,5 @@ public class SignalContext : ISignalContextInternal
         {
             _pendingSubscriberNotifications.Add((signal, subscriber));
         }
-    }
-
-    void ISupportInitialize.BeginInit()
-    {
-        _writeScopeLevel.Value++;
-    }
-
-    void ISupportInitialize.EndInit()
-    {
-        _writeScopeLevel.Value--;
-        if (_writeScopeLevel.Value > 0)
-            return;
-
-        (ISignal signal, Func<ISignal, Task> subscriber)[]? pendingNotifications;
-        lock (_lock)
-        {
-            pendingNotifications = _pendingSubscriberNotifications.ToArray();
-            _pendingSubscriberNotifications.Clear();
-        }
-
-        foreach ((ISignal signal, Func<ISignal, Task> subscriber) notification in pendingNotifications)
-            notification.subscriber(notification.signal);
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Signals4Net;
 
-public interface ISignalContext : ISupportInitialize
+public interface ISignalContext
 {
     IState<T> State<T>(T value = default!, EqualityComparer<T>? comparer = default);
 
@@ -10,7 +10,7 @@ public interface ISignalContext : ISupportInitialize
 
     void Remove(ISignal signal);
 
-    IDisposable WriteScope();
+    IAsyncDisposable WriteScope();
 
     Task<IDisposable> AddEffectAsync(Func<CancellationToken, Task> effect, CancellationToken cancellationToken = default);
 }

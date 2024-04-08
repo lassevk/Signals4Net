@@ -78,7 +78,7 @@ public class StateTests
         var fireCount = 0;
         state.Subscribe(() => fireCount++);
 
-        IDisposable scope = context.WriteScope();
+        IAsyncDisposable scope = context.WriteScope();
 
         Assert.That(fireCount, Is.EqualTo(0));
 
@@ -86,7 +86,7 @@ public class StateTests
 
         Assert.That(fireCount, Is.EqualTo(0));
 
-        scope.Dispose();
+        await scope.DisposeAsync();
         Assert.That(fireCount, Is.EqualTo(1));
     }
 
@@ -97,7 +97,9 @@ public class StateTests
         IState<int> state = context.State(0);
         state.Freeze();
 
-        Assert.Throws<InvalidOperationException>(() => state.SetValueAsync(15));
+        var t = Task.Run(async () => await state.SetValueAsync(15));
+
+        Assert.Throws<InvalidOperationException>(() => t.GetAwaiter().GetResult());
     }
 
     [Test]

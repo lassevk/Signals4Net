@@ -83,7 +83,7 @@ public class EffectTests
         });
         Assert.That(callCount, Is.EqualTo(1));
 
-        using (context.WriteScope())
+        await using (context.WriteScope())
         {
             await state.MutateAsync(v => v + 1);
             await state.MutateAsync(v => Task.FromResult(v + 1));

@@ -25,27 +25,23 @@ public class State<T> : ReadOnlySignal<T>, IState<T>
 
     public override Task<T> PeekValueAsync(CancellationToken cancellationToken = default) => Task.FromResult(_value);
 
-    public Task SetValueAsync(T value, CancellationToken cancellationToken)
+    public async Task SetValueAsync(T value, CancellationToken cancellationToken)
     {
         if (_isFrozen)
             throw new InvalidOperationException("State signal is frozen, value cannot be changed");
 
-        // async will be important here when effects are put back into the mix
-        // todo: refactor to be properly async to trigger effects
         if (_comparer.Equals(_value, value))
-            return Task.CompletedTask;
+            return;
 
         _value = value;
         using (ExecutionContext.SuppressFlow())
-        using (_context.WriteScope())
+        await using (_context.WriteScope())
         {
             _context.OnChanged(this);
 
             foreach (Func<ISignal, Task> subscriber in GetSubscribers())
                 _context.QueueSubscriberNotification(this, subscriber);
         }
-
-        return Task.CompletedTask;
     }
 
     public void Freeze()
