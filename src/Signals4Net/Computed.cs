@@ -1,18 +1,15 @@
-﻿using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
+﻿namespace Signals4Net;
 
-namespace Signals4Net;
-
-public class Computed<T> : IComputed<T>, IComputedInternal
+public class Computed<T> : ReadOnlySignal<T>, IComputed<T>, IComputedInternal
 {
     private readonly ISignalContextInternal _context;
-    private readonly Func<T> _expression;
+    private readonly Func<CancellationToken, Task<T>> _expression;
     private readonly EqualityComparer<T> _comparer;
 
     private bool _dirty;
     private T _value;
 
-    internal Computed(ISignalContextInternal context, Func<T> expression, EqualityComparer<T> comparer)
+    internal Computed(ISignalContextInternal context, Func<CancellationToken, Task<T>> expression, EqualityComparer<T> comparer)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _expression = expression ?? throw new ArgumentNullException(nameof(expression));
@@ -21,38 +18,38 @@ public class Computed<T> : IComputed<T>, IComputedInternal
         _value = default!;
     }
 
-    public T Value
-    {
-        get
-        {
-            if (!_dirty)
-                return _value;
-
-            using IDisposable _ = _context.ThreadScope();
-            using (_context.ComputeScope(this))
-            {
-                _value = _expression();
-            }
-
-            _dirty = false;
-
-            _context.OnRead(this);
-            return _value;
-        }
-    }
-
     void IComputedInternal.SetDirty()
     {
-        using IDisposable _ = _context.ThreadScope();
         if (_dirty)
             return;
 
         _dirty = true;
 
+        // TODO: Handle versioning
         // TODO: Handle dirty/clean transitions and defer this one, if possible
-        _context.QueuePropertyChanged(this, PropertyChanged, nameof(Value));
+        foreach (Func<ISignal, Task> subscriber in GetSubscribers())
+            _context.QueueSubscriberNotification(this, subscriber);
     }
 
-    [ExcludeFromCodeCoverage]
-    public event PropertyChangedEventHandler? PropertyChanged;
+    public override async Task<T> GetValueAsync(CancellationToken cancellationToken = default)
+    {
+        if (!_dirty)
+            return _value;
+
+        _context.OnRead(this);
+        using (ExecutionContext.SuppressFlow())
+        {
+            using (_context.ComputeScope(this))
+            {
+                T newValue = await _expression(cancellationToken);;
+
+                // TODO: Handle versioning, if other task/thread have already changed this computed in the background
+                _dirty = false;
+                if (!_comparer.Equals(newValue, _value))
+                    _value = newValue;
+
+                return _value;
+            }
+        }
+    }
 }

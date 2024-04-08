@@ -8,7 +8,6 @@ internal interface ISignalContextInternal : ISignalContext
     void OnChanged(ISignal signal);
 
     IDisposable ComputeScope(IComputedInternal computed);
-    IDisposable ThreadScope();
     void FinalizeComputeScope(ComputeScope scope);
-    void QueuePropertyChanged(object sender, PropertyChangedEventHandler? handler, string propertyName);
+    void QueueSubscriberNotification(ISignal signal, Func<ISignal, Task> subscriber);
 }

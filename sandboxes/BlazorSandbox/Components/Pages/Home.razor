@@ -8,7 +8,7 @@
 
 Welcome to your new app.
 
-<p>@_displayText!.Value</p>
+<p>@_displayText!.GetValueAsync().Result</p>
 
 <p><button class="btn btn-primary" @onclick="IncrementCount">Click me</button></p>
 
@@ -17,25 +17,27 @@ Welcome to your new app.
     private readonly SignalContext _context = new();
     private IState<int>? _counter;
     private IComputed<string>? _displayText;
+    private Timer _timer;
 
     protected override void OnInitialized()
     {
         _counter = _context.State(0);
-        _displayText = _context.Computed(() => $"The counter value is: {_counter.Value}");
-        _context.Effect(() =>
+        _displayText = _context.Computed(async () => $"The counter value is: {await _counter.GetValueAsync()}");
+        _ = _context.AddEffectAsync(async () =>
         {
-            InvokeAsync(() =>
-            {
-                _ = _displayText.Value;
-                StateHasChanged();
-            });
+            // ensure the effect runs whenever displaytext changes
+            _ = await _displayText.GetValueAsync();
+            _ = InvokeAsync(StateHasChanged);
         });
 
-        new Timer(_ => _counter.Value++, null, 1000, 1000);
+        _timer = new Timer(async _ =>
+        {
+            await _counter.MutateAsync(v => v + 1);
+        }, null, 100, 100);
     }
 
-    private void IncrementCount()
+    private async Task IncrementCount()
     {
-        _counter!.Value++;
+        await _counter!.SetValueAsync(0);
     }
 }

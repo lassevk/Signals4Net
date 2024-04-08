@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Signals4Net;
 
-public class State<T> : IState<T>
+public class State<T> : ReadOnlySignal<T>, IState<T>
 {
     private readonly ISignalContextInternal _context;
     private readonly EqualityComparer<T> _comparer;
@@ -17,30 +17,26 @@ public class State<T> : IState<T>
         _comparer = comparer ?? throw new ArgumentNullException(nameof(comparer));
     }
 
-    public T Value
+    public override Task<T> GetValueAsync(CancellationToken cancellationToken = default)
     {
-        get
-        {
-            using IDisposable _ = _context.ThreadScope();
-            _context.OnRead(this);
-            return _value;
-        }
-        set
-        {
-            if (_comparer.Equals(_value, value))
-                return;
-
-            _value = value;
-            using (_context.ThreadScope())
-            using (_context.WriteScope())
-            {
-                _context.OnChanged(this);
-                _context.QueuePropertyChanged(this, PropertyChanged, nameof(Value));
-            }
-
-        }
+        _context.OnRead(this);
+        return Task.FromResult(_value);
     }
 
-    [ExcludeFromCodeCoverage]
-    public event PropertyChangedEventHandler? PropertyChanged;
+    public async Task SetValueAsync(T value, CancellationToken cancellationToken)
+    {
+        // async will be important here when effects are put back into the mix
+        if (_comparer.Equals(_value, value))
+            return;
+
+        _value = value;
+        using (ExecutionContext.SuppressFlow())
+        using (_context.WriteScope())
+        {
+            _context.OnChanged(this);
+
+            foreach (Func<ISignal, Task> subscriber in GetSubscribers())
+                _context.QueueSubscriberNotification(this, subscriber);
+        }
+    }
 }

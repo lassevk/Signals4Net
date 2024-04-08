@@ -1,6 +1,8 @@
 ﻿namespace Signals4Net;
 
-public interface IReadOnlySignal<out T>
+public interface IReadOnlySignal<T>
 {
-    T Value { get; }
+    Task<T> GetValueAsync(CancellationToken cancellationToken = default);
+
+    IDisposable Subscribe(Func<ISignal, Task> subscriber);
 }

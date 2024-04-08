@@ -6,9 +6,9 @@ public interface ISignalContext : ISupportInitialize
 {
     IState<T> State<T>(T value = default!, EqualityComparer<T>? comparer = default);
 
-    IComputed<T> Computed<T>(Func<T> expression, EqualityComparer<T>? comparer = default);
+    IComputed<T> Computed<T>(Func<CancellationToken, Task<T>> expression, EqualityComparer<T>? comparer = default);
 
     IDisposable WriteScope();
 
-    IDisposable Effect(Action action);
+    Task<IDisposable> AddEffectAsync(Func<CancellationToken, Task> effect, CancellationToken cancellationToken = default);
 }

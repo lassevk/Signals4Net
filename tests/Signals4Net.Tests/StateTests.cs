@@ -16,70 +16,71 @@ public class StateTests
     }
 
     [Test]
-    public void SetValue_NewValue_ChangesValue()
+    public async Task SetValue_NewValue_ChangesValue()
     {
         var context = new SignalContext();
         IState<int> state = context.State(10);
 
-        state.Value = 15;
-        Assert.That(state.Value, Is.EqualTo(15));
+        await state.SetValueAsync(15);
+        Assert.That(await state.GetValueAsync(), Is.EqualTo(15));
     }
 
     [Test]
-    public void PropertyChanged_WhenNewValueIsAssigned_FiresEvent()
+    public async Task PropertyChanged_WhenNewValueIsAssigned_FiresEvent()
     {
         var context = new SignalContext();
         IState<int> state = context.State(10);
 
         var fireCounter = 0;
-        state.PropertyChanged += (_, _) => fireCounter++;
+        state.Subscribe(_ => fireCounter++);
 
-        state.Value = 15;
-        Assert.That(state.Value, Is.EqualTo(15));
+        await state.SetValueAsync(15);
+        Assert.That(await state.GetValueAsync(), Is.EqualTo(15));
         Assert.That(fireCounter, Is.EqualTo(1));
     }
 
     [Test]
-    public void PropertyChanged_WhenSameValueIsAssigned_DoesNotFireEvent()
+    public async Task Subscribe_WhenSameValueIsAssigned_DoesNotCallSubscriber()
     {
         var context = new SignalContext();
         IState<int> state = context.State(10);
 
         var fireCounter = 0;
-        state.PropertyChanged += (_, _) => fireCounter++;
+        state.Subscribe(() => fireCounter++);
 
-        state.Value = 10;
+        await state.SetValueAsync(10);
         Assert.That(fireCounter, Is.EqualTo(0));
     }
 
     [Test]
-    public void PropertyChanged_WhenSignalChanges_FiresEvent()
+    public async Task Subscribe_WhenSignalChanges_CallsSubscriber()
     {
         var context = new SignalContext();
         IState<int> state = context.State(10);
         var fireCount = 0;
-        state.PropertyChanged += (_, _) => fireCount++;
+
+        state.Subscribe(() => fireCount++);
 
         Assert.That(fireCount, Is.EqualTo(0));
 
-        state.Value = 15;
+        await state.SetValueAsync(15);
 
         Assert.That(fireCount, Is.EqualTo(1));
     }
 
     [Test]
-    public void PropertyChanged_WhenSignalChangesButInWriteScope_FiresEventOnlyAfterScopeHasBeenDisposed()
+    public async Task Subscribe_WhenSignalChangesButInWriteScope_CallsSubscriberOnlyAfterScopeHasBeenDisposed()
     {
         var context = new SignalContext();
         IState<int> state = context.State(10);
         var fireCount = 0;
-        state.PropertyChanged += (_, _) => fireCount++;
+        state.Subscribe(() => fireCount++);
 
         IDisposable scope = context.WriteScope();
 
         Assert.That(fireCount, Is.EqualTo(0));
 
-        state.Value = 15;
+        await state.SetValueAsync(15);
 
         Assert.That(fireCount, Is.EqualTo(0));
 

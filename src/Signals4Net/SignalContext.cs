@@ -6,17 +6,16 @@ namespace Signals4Net;
 public class SignalContext : ISignalContextInternal
 {
     private readonly object _lock = new();
-    private readonly Stack<ComputeScope> _scopes = new();
     private readonly Dictionary<IComputedInternal, HashSet<ISignal>> _dependencies = new();
     private readonly Dictionary<ISignal, HashSet<IComputedInternal>> _computesThatDependsOnSignal = new();
-    private readonly List<(object sender, PropertyChangedEventHandler handler, string propertyName)> _pendingPropertyChangedEvents = new();
+    private readonly List<(ISignal signal, Func<ISignal, Task> subscriber)> _pendingSubscriberNotifications = new();
 
-    private int _writeScopeLevel;
-    private int? _threadId;
+    private readonly AsyncLocal<Stack<ComputeScope>?> _scopes = new();
+    private readonly AsyncLocal<int> _writeScopeLevel = new();
 
     public IState<T> State<T>(T value = default!, EqualityComparer<T>? comparer = default) => new State<T>(this, value, comparer ?? EqualityComparer<T>.Default);
 
-    public IComputed<T> Computed<T>(Func<T> expression, EqualityComparer<T>? comparer = default) => new Computed<T>(this, expression, comparer ?? EqualityComparer<T>.Default);
+    public IComputed<T> Computed<T>(Func<CancellationToken, Task<T>> expression, EqualityComparer<T>? comparer = default) => new Computed<T>(this, expression, comparer ?? EqualityComparer<T>.Default);
 
     public IDisposable WriteScope()
     {
@@ -24,31 +23,33 @@ public class SignalContext : ISignalContextInternal
         return new ActionDisposable(((ISupportInitialize)this).EndInit);
     }
 
-    public IDisposable Effect(Action action)
+    public async Task<IDisposable> AddEffectAsync(Func<CancellationToken, Task> effect, CancellationToken cancellationToken = default)
     {
-        using IDisposable __ = ((ISignalContextInternal)this).ThreadScope();
         var counter = 0;
-        IComputed<int> computed = Computed(() =>
+        IComputed<int> computed = Computed(async ct =>
         {
-            action();
+            await effect(ct);
             return ++counter;
         });
 
-        PropertyChangedEventHandler handler = (_, _) => _ = computed.Value;
-        computed.PropertyChanged += handler;
-        _ = computed.Value;
+        async Task subscriber(ISignal _) => await computed.GetValueAsync(CancellationToken.None);
+
+        IDisposable subscription = computed.Subscribe(subscriber);
+        _ = await computed.GetValueAsync(cancellationToken);
 
         return new ActionDisposable(() =>
         {
-            using IDisposable _ = ((ISignalContextInternal)this).ThreadScope();
-            computed.PropertyChanged -= handler;
+            subscription.Dispose();
             RemoveDependencies((IComputedInternal)computed);
         });
     }
 
     void ISignalContextInternal.OnRead(ISignal signal)
     {
-        if (!_scopes.TryPeek(out ComputeScope? scope))
+        if (_scopes.Value == null)
+            return;
+
+        if (!_scopes.Value!.TryPeek(out ComputeScope? scope))
             return;
 
         scope.Read(signal);
@@ -56,7 +57,10 @@ public class SignalContext : ISignalContextInternal
 
     void ISignalContextInternal.OnChanged(ISignal signal)
     {
-        flagDependenciesDirty(signal);
+        lock (_lock)
+        {
+            flagDependenciesDirty(signal);
+        }
 
         void flagDependenciesDirty(ISignal currentSignal)
         {
@@ -74,90 +78,79 @@ public class SignalContext : ISignalContextInternal
     IDisposable ISignalContextInternal.ComputeScope(IComputedInternal computed)
     {
         var scope = new ComputeScope(this, computed);
-        _scopes.Push(scope);
+        _scopes.Value ??= new();
+        _scopes.Value.Push(scope);
         return scope;
-    }
-
-    [ExcludeFromCodeCoverage]
-    IDisposable ISignalContextInternal.ThreadScope()
-    {
-        lock (_lock)
-        {
-            int currentThreadId = Thread.CurrentThread.ManagedThreadId;
-            if (!_threadId.HasValue)
-            {
-                _threadId = currentThreadId;
-                return new ActionDisposable(() =>
-                {
-                    if (Thread.CurrentThread.ManagedThreadId != _threadId)
-                        throw new InvalidOperationException("The SignalContext class cannot be used across threads");
-
-                    _threadId = null;
-                });
-            }
-
-            if (_threadId.Value != currentThreadId)
-                throw new InvalidOperationException("The SignalContext class cannot be used across threads");
-
-            return VoidDisposable.Instance;
-        }
     }
 
     void ISignalContextInternal.FinalizeComputeScope(ComputeScope scope)
     {
-        if (scope != _scopes.Pop())
+        if (scope != _scopes.Value!.Pop())
             throw new InvalidOperationException("ComputeScopes finalized out of order");
 
-        RemoveDependencies(scope.Computed);
-        _dependencies[scope.Computed] = scope.ReadSignals;
-        foreach (ISignal dependency in scope.ReadSignals)
-        {
-            if (!_computesThatDependsOnSignal.TryGetValue(dependency, out HashSet<IComputedInternal>? computesThatDependsOnSignal))
-                computesThatDependsOnSignal = _computesThatDependsOnSignal[dependency] = new();
+        if (_scopes.Value!.Count == 0)
+            _scopes.Value = null;
 
-            computesThatDependsOnSignal.Add(scope.Computed);
+        lock (_lock)
+        {
+            RemoveDependencies(scope.Computed);
+            _dependencies[scope.Computed] = scope.ReadSignals;
+            foreach (ISignal dependency in scope.ReadSignals)
+            {
+                if (!_computesThatDependsOnSignal.TryGetValue(dependency, out HashSet<IComputedInternal>? computesThatDependsOnSignal))
+                    computesThatDependsOnSignal = _computesThatDependsOnSignal[dependency] = new();
+
+                computesThatDependsOnSignal.Add(scope.Computed);
+            }
         }
     }
 
     private void RemoveDependencies(IComputedInternal computed)
     {
-        if (!_dependencies.TryGetValue(computed, out HashSet<ISignal>? dependencies))
-            return;
-
-        foreach (ISignal signal in dependencies)
+        lock (_lock)
         {
-            if (!_computesThatDependsOnSignal.TryGetValue(signal, out HashSet<IComputedInternal>? computesThatDependsOnSignal))
-                continue;
+            if (!_dependencies.TryGetValue(computed, out HashSet<ISignal>? dependencies))
+                return;
 
-            computesThatDependsOnSignal.Remove(computed);
+            foreach (ISignal signal in dependencies)
+            {
+                if (!_computesThatDependsOnSignal.TryGetValue(signal, out HashSet<IComputedInternal>? computesThatDependsOnSignal))
+                    continue;
+
+                computesThatDependsOnSignal.Remove(computed);
+            }
+
+            _dependencies.Remove(computed);
         }
-
-        _dependencies.Remove(computed);
     }
 
-    void ISignalContextInternal.QueuePropertyChanged(object sender, PropertyChangedEventHandler? handler, string propertyName)
+    void ISignalContextInternal.QueueSubscriberNotification(ISignal signal, Func<ISignal, Task> subscriber)
     {
-        if (handler is null)
-            return;
-
-        _pendingPropertyChangedEvents.Add((sender, handler, propertyName));
+        lock (_lock)
+        {
+            _pendingSubscriberNotifications.Add((signal, subscriber));
+        }
     }
 
     void ISupportInitialize.BeginInit()
     {
-        _writeScopeLevel++;
+        _writeScopeLevel.Value++;
     }
 
     void ISupportInitialize.EndInit()
     {
-        _writeScopeLevel--;
-        if (_writeScopeLevel > 0)
+        _writeScopeLevel.Value--;
+        if (_writeScopeLevel.Value > 0)
             return;
 
-        (object sender, PropertyChangedEventHandler handler, string propertyName)[] events = _pendingPropertyChangedEvents.ToArray();
-        _pendingPropertyChangedEvents.Clear();
+        (ISignal signal, Func<ISignal, Task> subscriber)[]? pendingNotifications;
+        lock (_lock)
+        {
+            pendingNotifications = _pendingSubscriberNotifications.ToArray();
+            _pendingSubscriberNotifications.Clear();
+        }
 
-        foreach ((object sender, PropertyChangedEventHandler handler, string propertyName) item in events)
-            item.handler(item.sender, new PropertyChangedEventArgs(item.propertyName));
+        foreach ((ISignal signal, Func<ISignal, Task> subscriber) notification in pendingNotifications)
+            notification.subscriber(notification.signal);
     }
 }

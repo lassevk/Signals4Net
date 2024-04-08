@@ -1,7 +1,5 @@
-﻿using System.ComponentModel;
+﻿namespace Signals4Net;
 
-namespace Signals4Net;
-
-public interface ISignal : INotifyPropertyChanged
+public interface ISignal
 {
 }

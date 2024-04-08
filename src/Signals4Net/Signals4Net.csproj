@@ -67,6 +67,15 @@
       <Compile Update="State.cs">
         <DependentUpon>IState.cs</DependentUpon>
       </Compile>
+      <Compile Update="ReadOnlySignal.cs">
+        <DependentUpon>IReadOnlySignal.cs</DependentUpon>
+      </Compile>
+      <Compile Update="SignalContextExtensions.cs">
+        <DependentUpon>ISignalContext.cs</DependentUpon>
+      </Compile>
+      <Compile Update="ReadOnlySignalExtensions.cs">
+        <DependentUpon>IReadOnlySignal.cs</DependentUpon>
+      </Compile>
     </ItemGroup>
 
     <ItemGroup>

@@ -3,87 +3,90 @@
 public class EffectTests
 {
     [Test]
-    public void Effect_WhenSignalChanges_ActionIsCalled()
+    public async Task Effect_WhenSignalChanges_ActionIsCalled()
     {
         var context = new SignalContext();
 
         IState<int> state = context.State(0);
         var callCount = 0;
-        context.Effect(() =>
+        _ = context.AddEffectAsync(async () =>
         {
-            _ = state.Value;
+            _ = await state.GetValueAsync();
             callCount++;
         });
+
         Assert.That(callCount, Is.EqualTo(1));
 
-        state.Value++;
+        await state.SetValueAsync(await state.GetValueAsync() + 1);
 
         Assert.That(callCount, Is.EqualTo(2));
     }
 
     [Test]
-    public void Effect_WhenStateChangesTwice_IsCalledBothTimes()
+    public async Task Effect_WhenStateChangesTwice_IsCalledBothTimes()
     {
         var context = new SignalContext();
 
         IState<int> state = context.State(0);
         var callCount = 0;
-        context.Effect(() =>
+        _ = context.AddEffectAsync(async () =>
         {
-            _ = state.Value;
+            _ = await state.GetValueAsync();
             callCount++;
         });
+
         Assert.That(callCount, Is.EqualTo(1));
 
-        state.Value++;
-        state.Value++;
+        await state.SetValueAsync(1);
+        await state.SetValueAsync(2);
 
         Assert.That(callCount, Is.EqualTo(3));
     }
 
     [Test]
-    public void Effect_AfterSubscriptionIsDisposed_IsNoLongerCalled()
+    public async Task Effect_AfterSubscriptionIsDisposed_IsNoLongerCalled()
     {
         var context = new SignalContext();
 
         IState<int> state = context.State(0);
         var callCount = 0;
-        IDisposable subscription = context.Effect(() =>
+        IDisposable subscription = await context.AddEffectAsync(async () =>
         {
-            _ = state.Value;
+            _ = await state.GetValueAsync();
             callCount++;
         });
         Assert.That(callCount, Is.EqualTo(1));
 
-        state.Value++;
+        await state.SetValueAsync(1);
 
         Assert.That(callCount, Is.EqualTo(2));
+        callCount = 0;
 
         subscription.Dispose();
 
-        state.Value++;
+        await state.SetValueAsync(2);
 
-        Assert.That(callCount, Is.EqualTo(2));
+        Assert.That(callCount, Is.EqualTo(0));
     }
 
     [Test]
-    public void Effect_WhenStateChangesTwiceInsideWriteScope_IsOnlyCalledOnce()
+    public async Task Effect_WhenStateChangesTwiceInsideWriteScope_IsOnlyCalledOnce()
     {
         var context = new SignalContext();
 
         IState<int> state = context.State(0);
         var callCount = 0;
-        IDisposable subscription = context.Effect(() =>
+        IDisposable subscription = context.AddEffectAsync(async () =>
         {
-            _ = state.Value;
+            _ = await state.GetValueAsync();
             callCount++;
         });
         Assert.That(callCount, Is.EqualTo(1));
 
         using (context.WriteScope())
         {
-            state.Value++;
-            state.Value++;
+            await state.SetValueAsync(1);
+            await state.SetValueAsync(2);
         }
 
         Assert.That(callCount, Is.EqualTo(2));
