@@ -21,6 +21,8 @@ public abstract class ReadOnlySignal<T> : IReadOnlySignal<T>
             lock (_lock)
             {
                 _subscribers.Remove(subscriber);
+                if (_subscribers.Count == 0)
+                    _subscribers = null;
             }
         });
     }
