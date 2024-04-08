@@ -8,6 +8,8 @@ public interface ISignalContext : ISupportInitialize
 
     IComputed<T> Computed<T>(Func<CancellationToken, Task<T>> expression, EqualityComparer<T>? comparer = default);
 
+    void Remove(ISignal signal);
+
     IDisposable WriteScope();
 
     Task<IDisposable> AddEffectAsync(Func<CancellationToken, Task> effect, CancellationToken cancellationToken = default);
