@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace Signals4Net;
+﻿namespace Signals4Net;
 
 public interface IState<T> : IReadOnlySignal<T>, ISignal
 {

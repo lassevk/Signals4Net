@@ -33,10 +33,15 @@ public class Computed<T> : ReadOnlySignal<T>, IComputed<T>, IComputedInternal
 
     public override async Task<T> GetValueAsync(CancellationToken cancellationToken = default)
     {
+        _context.OnRead(this);
+        return await PeekValueAsync(cancellationToken);
+    }
+
+    public override async Task<T> PeekValueAsync(CancellationToken cancellationToken = default)
+    {
         if (!_dirty)
             return _value;
 
-        _context.OnRead(this);
         using (ExecutionContext.SuppressFlow())
         {
             using (_context.ComputeScope(this))

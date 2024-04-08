@@ -1,7 +1,4 @@
-﻿using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
-
-namespace Signals4Net;
+﻿namespace Signals4Net;
 
 public class State<T> : ReadOnlySignal<T>, IState<T>
 {
@@ -25,6 +22,8 @@ public class State<T> : ReadOnlySignal<T>, IState<T>
 
         return Task.FromResult(_value);
     }
+
+    public override Task<T> PeekValueAsync(CancellationToken cancellationToken = default) => Task.FromResult(_value);
 
     public Task SetValueAsync(T value, CancellationToken cancellationToken)
     {

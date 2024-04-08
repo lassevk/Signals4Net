@@ -1,5 +1,4 @@
 ﻿using NSubstitute;
-using NSubstitute.Exceptions;
 
 namespace Signals4Net.Tests;
 
@@ -122,5 +121,16 @@ public class StateTests
         _ = await state.GetValueAsync();
 
         context.Received().OnRead(state);
+    }
+
+    [Test]
+    public async Task PeekValueAsync_StateSignal_DoesNotRegisterReadWithSignalContext()
+    {
+        ISignalContextInternal context = Substitute.For<ISignalContextInternal>();
+        var state = new State<int>(context, 0, EqualityComparer<int>.Default);
+
+        _ = await state.PeekValueAsync();
+
+        context.DidNotReceive().OnRead(state);
     }
 }

@@ -6,6 +6,7 @@ public abstract class ReadOnlySignal<T> : IReadOnlySignal<T>
     private HashSet<Func<ISignal, Task>>? _subscribers;
 
     public abstract Task<T> GetValueAsync(CancellationToken cancellationToken = default);
+    public abstract Task<T> PeekValueAsync(CancellationToken cancellationToken = default);
 
     public IDisposable Subscribe(Func<ISignal, Task> subscriber)
     {

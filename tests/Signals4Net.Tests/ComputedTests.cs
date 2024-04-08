@@ -132,4 +132,26 @@ public class ComputedTests
 
         Assert.That(fireCount, Is.EqualTo(1));
     }
+
+    [Test]
+    public async Task GetValueAsync_RegistersReadWithSignalContext()
+    {
+        ISignalContextInternal context = Substitute.For<ISignalContextInternal>();
+        var computed = new Computed<int>(context, _ => Task.FromResult(0), EqualityComparer<int>.Default);
+
+        _ = await computed.GetValueAsync();
+
+        context.Received().OnRead(computed);
+    }
+
+    [Test]
+    public async Task PeekValueAsync_DoesNotRegisterReadWithSignalContext()
+    {
+        ISignalContextInternal context = Substitute.For<ISignalContextInternal>();
+        var computed = new Computed<int>(context, _ => Task.FromResult(0), EqualityComparer<int>.Default);
+
+        _ = await computed.PeekValueAsync();
+
+        context.DidNotReceive().OnRead(computed);
+    }
 }
