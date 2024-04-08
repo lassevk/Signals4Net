@@ -3,11 +3,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Signals4Net;
 
-/// <summary>
-/// This class is the main implementation of the signal system. All state and computed signals
-/// that should be used together must be created from the same <see cref="SignalContext"/>
-/// instance, or change propagation will not work.
-/// </summary>
 public class SignalContext : ISignalContextInternal
 {
     private readonly object _lock = new();
@@ -19,20 +14,16 @@ public class SignalContext : ISignalContextInternal
     private int _writeScopeLevel;
     private int? _threadId;
 
-    /// <inheritdoc cref="ISignalContext.State{T}"/>
     public IState<T> State<T>(T value = default!, EqualityComparer<T>? comparer = default) => new State<T>(this, value, comparer ?? EqualityComparer<T>.Default);
 
-    /// <inheritdoc cref="ISignalContext.Computed{T}"/>
     public IComputed<T> Computed<T>(Func<T> expression, EqualityComparer<T>? comparer = default) => new Computed<T>(this, expression, comparer ?? EqualityComparer<T>.Default);
 
-    /// <inheritdoc cref="ISignalContext.WriteScope"/>
     public IDisposable WriteScope()
     {
         ((ISupportInitialize)this).BeginInit();
         return new ActionDisposable(((ISupportInitialize)this).EndInit);
     }
 
-    /// <inheritdoc cref="ISignalContext.Effect"/>
     public IDisposable Effect(Action action)
     {
         using IDisposable __ = ((ISignalContextInternal)this).ThreadScope();
