@@ -17,7 +17,7 @@ Welcome to your new app.
     private readonly SignalContext _context = new();
     private IState<int>? _counter;
     private IComputed<string>? _displayText;
-    private Timer _timer;
+    private Timer? _timer;
 
     protected override void OnInitialized()
     {

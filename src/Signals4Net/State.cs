@@ -23,11 +23,12 @@ public class State<T> : ReadOnlySignal<T>, IState<T>
         return Task.FromResult(_value);
     }
 
-    public async Task SetValueAsync(T value, CancellationToken cancellationToken)
+    public Task SetValueAsync(T value, CancellationToken cancellationToken)
     {
         // async will be important here when effects are put back into the mix
+        // todo: refactor to be properly async to trigger effects
         if (_comparer.Equals(_value, value))
-            return;
+            return Task.CompletedTask;
 
         _value = value;
         using (ExecutionContext.SuppressFlow())
@@ -38,5 +39,7 @@ public class State<T> : ReadOnlySignal<T>, IState<T>
             foreach (Func<ISignal, Task> subscriber in GetSubscribers())
                 _context.QueueSubscriberNotification(this, subscriber);
         }
+
+        return Task.CompletedTask;
     }
 }
