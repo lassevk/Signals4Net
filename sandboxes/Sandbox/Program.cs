@@ -9,6 +9,6 @@ IComputed<string> oddEven = context.Computed(async () => (await isEven.GetValueA
 await context.AddEffectAsync(async () => Console.WriteLine($"counter: {await counter.GetValueAsync()}, oddEven state: {await oddEven.GetValueAsync()}"));
 
 // Simulate external updates to counter
-new Timer(async _ => await counter.MutateAsync(v => v + 1), null, 1000, 1000);
+_ = new Timer(async _ => await counter.MutateAsync(v => v + 1), null, 1000, 1000);
 
 Console.ReadLine();

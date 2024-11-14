@@ -3,7 +3,7 @@
 namespace Signals4Net;
 
 [ExcludeFromCodeCoverage]
-internal class VoidDisposable : IDisposable
+internal sealed class VoidDisposable : IDisposable
 {
     public void Dispose()
     {

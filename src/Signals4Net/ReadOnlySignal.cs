@@ -2,7 +2,11 @@ namespace Signals4Net;
 
 public abstract class ReadOnlySignal<T> : IReadOnlySignal<T>
 {
+#if NET9_0_OR_GREATER
+    private readonly Lock _lock = new();
+#else
     private readonly object _lock = new();
+#endif
     private HashSet<Func<ISignal, Task>>? _subscribers;
 
     public abstract Task<T> GetValueAsync(CancellationToken cancellationToken = default);
@@ -12,7 +16,7 @@ public abstract class ReadOnlySignal<T> : IReadOnlySignal<T>
     {
         lock (_lock)
         {
-            _subscribers ??= new();
+            _subscribers ??= [];
             _subscribers.Add(subscriber);
         }
 
@@ -31,7 +35,7 @@ public abstract class ReadOnlySignal<T> : IReadOnlySignal<T>
     {
         lock (_lock)
         {
-            return _subscribers?.ToArray() ?? Array.Empty<Func<ISignal, Task>>();
+            return _subscribers?.ToArray() ?? [];
         }
     }
 }

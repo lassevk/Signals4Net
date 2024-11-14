@@ -2,7 +2,11 @@
 
 public class SignalContext : ISignalContextInternal
 {
+#if NET9_0_OR_GREATER
+    private readonly Lock _lock = new();
+#else
     private readonly object _lock = new();
+#endif
     private readonly Dictionary<ISignal, HashSet<ISignal>> _dependencies = new();
     private readonly Dictionary<ISignal, HashSet<ISignal>> _computesThatDependsOnSignal = new();
     private readonly List<(ISignal signal, Func<ISignal, Task> subscriber)> _pendingSubscriberNotifications = new();
